@@ -29,6 +29,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_it.h"
+extern volatile uint32_t msTicks;
+extern lwrb_t usart_rb;
 
 /** @addtogroup Template_Project
   * @{
@@ -138,9 +140,15 @@ void PendSV_Handler(void)
   * @param  None
   * @retval None
   */
-void SysTick_Handler(void)
-{
-/*  TimingDelay_Decrement(); */
+void SysTick_Handler(void){
+  msTicks++;
+}
+
+void USART1_IRQHandler(void) {
+  if (USART_GetITStatus(USART1, USART_IT_RXNE)) {
+    uint8_t data = USART_ReceiveData(USART1);
+    lwrb_write(&usart_rb, &data, 1);
+  }
 }
 
 /******************************************************************************/

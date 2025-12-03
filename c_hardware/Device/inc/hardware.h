@@ -8,8 +8,10 @@
 #include <stm32f4xx_gpio.h>
 /*<! HAL handmade */
 #include "usart_api.h"
+#include "systick_api.h"
 #include "gpio_api.h"
 #include "exti_api.h"
+#include "clock_api.h"
 /* ============================================================================================= */
 
 

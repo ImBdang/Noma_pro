@@ -1,8 +1,21 @@
 #include "gsm.h"
 
+/* ================================== EXTERN VARIABLES ====================================== */
+extern event_queue_t response_event_queue;
+extern event_queue_t urc_event_queue;
+/* ========================================================================================== */
+
+
+/* ================================== GLOBAL VARIABLES ====================================== */
+sim_state_t sim_state;                                  /*<! SIM STATUS */
+network_state_t network_state;                          /*<! NETWORK STATUS */
+/* ========================================================================================== */
+
+
 /* ================================== STATIC DECLARATIONS =================================== */
 static gsm_state_t gsm_cur_state = GSM_DECISION_STATE;      /*<! Current state of gsm state machine */
-static gsm_decision_flag_t decision_flag;
+static gsm_decision_flag_t decision_flag;                   /*<! Struct store many flag for each state */
+static uint8_t sharedStep = 0;                              /*<! Shared step variable for every state, remember reset it to 0 after use */
 
 /*<! Clear decision flags */
 static void clear_decision_flags(void);
@@ -43,15 +56,14 @@ static void clear_decision_flags(void)
  * @brief   Power off modem
  */
 bool gsm_power_off(void){
-    static uint8_t step = 0;
     static uint32_t t0 = 0;
 
-    switch (step)
+    switch (sharedStep)
     {
         case 0:
             SIM_PWKEY_LOW();
             t0 = get_systick_ms();
-            step = 1;
+            sharedStep = 1;
             DEBUG_PRINT("POWERING OFF, PWKEY LOW 2.5s\r\n");
             return false;
 
@@ -60,19 +72,19 @@ bool gsm_power_off(void){
                 return false;
             SIM_PWKEY_HIGH();
             t0 = get_systick_ms();
-            step = 2;
+            sharedStep = 2;
             DEBUG_PRINT("POWERING OFF, PWKEY HIGH about 8.9s\r\n");
             return false;
 
         case 2:
             if (!SIM_STATUS_READ()){
                 DEBUG_PRINT("STATUS is LOW, MODEM is now OFFLINE\r\n");
-                step = 0;
+                sharedStep = 0;
                 return true;
             }
             if (get_systick_ms() - t0 > 8900) {
-                step = 0;                     
-                DEBUG_PRINT("TIMEOUT, reset to step 0\r\n");
+                sharedStep = 0;                     
+                DEBUG_PRINT("TIMEOUT, retry\r\n");
                 return false;
             }
             DEBUG_PRINT("Waiting STATUS OFF\r\n");
@@ -90,15 +102,14 @@ bool gsm_power_off(void){
  */
 bool gsm_power_on(void)
 {
-    static uint8_t step = 0;
     static uint32_t t0 = 0;
 
-    switch (step)
+    switch (sharedStep)
     {
         case 0:
             SIM_PWKEY_LOW();
             t0 = get_systick_ms();
-            step = 1;
+            sharedStep = 1;
             DEBUG_PRINT("POWERING ON, PWKEY LOW 50ms\r\n");
             return false;
 
@@ -107,19 +118,19 @@ bool gsm_power_on(void)
                 return false;
             SIM_PWKEY_HIGH();
             t0 = get_systick_ms();
-            step = 2;
+            sharedStep = 2;
             DEBUG_PRINT("POWERING ON, PWKEY HIGH about 8.5s\r\n");
             return false;
 
         case 2:
             if (SIM_STATUS_READ()){
                 DEBUG_PRINT("STATUS is HIGH, MODEM is now ONLINE\r\n");
-                step = 0;
+                sharedStep = 0;
                 return true;
             }
             if (get_systick_ms() - t0 > 8500) {
-                step = 0;                   
-                DEBUG_PRINT("TIMEOUT, reset to step 0\r\n");
+                sharedStep = 0;                   
+                DEBUG_PRINT("TIMEOUT, retry\r\n");
                 return false;
             }
             DEBUG_PRINT("Waiting STATUS ON\r\n");
@@ -166,7 +177,7 @@ bool gsm_power_reset(void){
 static void process_gsm_decision_state(void)
 {
     /*<! STATE: ERROR */
-    if (!decision_flag.error) {
+    if (decision_flag.error) {
         gsm_cur_state = GSM_ERROR;
         return;
     }
@@ -227,43 +238,274 @@ static void process_gsm_decision_state(void)
 }
 
 
-
 /*<! GSM_POWER_OFF_STATE ---------------------------------------------*/
 static void process_gsm_power_off_state(void)
 {
-    // TODO: Your logic here
+    if (gsm_power_off()){
+        decision_flag.power_on = true;
+        gsm_cur_state = GSM_DECISION_STATE;
+        delay_ms(500);
+    }
 }
 
 
 /*<! GSM_POWER_ON_STATE ----------------------------------------------*/
 static void process_gsm_power_on_state(void)
 {
-    // TODO: Your logic here
+    if (gsm_power_on()){
+        decision_flag.power_on = true;
+        gsm_cur_state = GSM_DECISION_STATE;
+        delay_ms(500);
+    }
 }
 
 
 /*<! GSM_SYNC_AT_STATE ------------------------------------------------*/
+static bool process_gsm_sync_at_state_entry(void){
+    at_command_t cmd = {
+        .cmd = "AT",
+        .expect = "",
+        .timeout_ms =  7000,
+        .cb = gsm_basic_callback
+    };
+    return send_at_cmd(cmd);
+}
+static void process_gsm_sync_at_state_wait(void){
+    event_t event;
+    static uint8_t timeout_count = 0;
+    static uint8_t max_timeout = 3;
+    if (!pop_event(&response_event_queue, &event))
+        return;
+
+    switch (event.response)
+    {
+        case EVT_OK:
+            timeout_count = 0; 
+            decision_flag.sync_at = true;
+            gsm_cur_state = GSM_DECISION_STATE;
+            sharedStep = 0;
+            break;
+
+
+        case EVT_TIMEOUT:
+            decision_flag.sync_at = false;
+            timeout_count++;
+            if (timeout_count >= max_timeout){
+                sharedStep = 0;
+                decision_flag.error = true;
+                timeout_count = 0;
+            }
+            gsm_cur_state = GSM_DECISION_STATE;
+            break;
+        
+
+        case EVT_ERR:
+            sharedStep = 0;
+            timeout_count = 0;
+            decision_flag.error = true;
+            gsm_cur_state = GSM_DECISION_STATE;
+            break;
+    }    
+}
+
 static void process_gsm_sync_at_state(void)
 {
-    // TODO: Your logic here
+    static uint8_t step = 0;
+    bool tmp = false;
+    switch (step)
+    {
+    case 0:
+        tmp = process_gsm_sync_at_state_entry();
+        if (tmp){
+            step++;
+        }
+        break;
+    
+    case 1:
+        process_gsm_sync_at_state_wait();
+        break;
+
+    }
 }
 
 
 /*<! GSM_CONFIG_STATE -------------------------------------------------*/
-static void process_gsm_config_state(void)
-{
-    // TODO: Your logic here
+static bool process_gsm_config_state_entry(void){
+    switch (sharedStep)
+    {
+        case 0:{
+            at_command_t cmd = {
+                .cmd = "AT+CFUN=1",
+                .expect = "",
+                .timeout_ms =  5000,
+                .cb = gsm_basic_callback
+            };
+            return send_at_cmd(cmd);
+        }
+        /*<! ADD More later */
+    }
+    return false;
+}
+static void process_gsm_config_state_wait(void){
+    event_t event;
+    static uint8_t timeout_count = 0;
+    static uint8_t max_timeout = 3;
+    if (!pop_event(&response_event_queue, &event))
+        return;
+
+    switch (event.response)
+    {
+        case EVT_OK:
+            timeout_count = 0; 
+            decision_flag.config = true;
+            gsm_cur_state = GSM_DECISION_STATE;
+            sharedStep = 0;
+            break;
+
+
+        case EVT_TIMEOUT:
+            decision_flag.config = false;
+            timeout_count++;
+            if (timeout_count >= max_timeout){
+                sharedStep = 0;
+                decision_flag.error = true;
+                timeout_count = 0;
+            }
+            gsm_cur_state = GSM_DECISION_STATE;
+            break;
+        
+
+        case EVT_ERR:
+            sharedStep = 0;
+            timeout_count = 0;
+            decision_flag.error = true;
+            gsm_cur_state = GSM_DECISION_STATE;
+            break;
+    }    
+}
+
+static void process_gsm_config_state(void){
+    static uint8_t step = 0;
+    bool tmp = false;
+    switch (step)
+    {
+    case 0:
+        tmp = process_gsm_config_state_entry();
+        if (tmp){
+            step++;
+        }
+        break;
+    
+    case 1:
+        process_gsm_config_state_wait();
+        break;
+
+    }
 }
 
 
 /*<! GSM_CHECK_SIM_STATE ----------------------------------------------*/
+
+static bool process_gsm_check_sim_state_entry(void)
+{
+    at_command_t cmd = {
+        .cmd = "AT+CPIN?",
+        .expect = "+CPIN:",
+        .timeout_ms =  5000,
+        .cb = gsm_check_sim_callback
+    };
+    return send_at_cmd(cmd);
+}
+static void process_gsm_check_sim_state_wait(void)
+{
+    event_t event;
+    static uint8_t timeout_count = 0;
+    static uint8_t max_timeout = 3;
+    if (!pop_event(&response_event_queue, &event))
+        return;
+
+    switch (event.response)
+    {
+        case EVT_SIM_RDY:
+            timeout_count = 0; 
+            decision_flag.check_sim = true;
+            gsm_cur_state = GSM_DECISION_STATE;
+            sharedStep = 0;
+            break;
+
+        case EVT_SIM_PIN:
+            timeout_count = 0; 
+            decision_flag.check_sim = false;
+            gsm_cur_state = GSM_DECISION_STATE;
+            sharedStep = 0;
+            break;
+
+        case EVT_SIM_PUK:
+            timeout_count = 0; 
+            decision_flag.check_sim = false;
+            gsm_cur_state = GSM_DECISION_STATE;
+            sharedStep = 0;
+            break;
+
+
+        case EVT_TIMEOUT:
+            decision_flag.check_sim = false;
+            timeout_count++;
+            if (timeout_count >= max_timeout){
+                sharedStep = 0;
+                decision_flag.error = true;
+                timeout_count = 0;
+            }
+            gsm_cur_state = GSM_DECISION_STATE;
+            break;
+        
+
+        case EVT_ERR:
+            sharedStep = 0;
+            timeout_count = 0;
+            decision_flag.error = true;
+            gsm_cur_state = GSM_DECISION_STATE;
+            break;
+    }    
+}
+
 static void process_gsm_check_sim_state(void)
 {
-    // TODO: Your logic here
+    static uint8_t step = 0;
+    bool tmp = false;
+    switch (step)
+    {
+    case 0:
+        tmp = process_gsm_check_sim_state_entry();
+        if (tmp){
+            step++;
+        }
+        break;
+    
+    case 1:
+        process_gsm_check_sim_state_wait();
+        break;
+
+    }
 }
 
 
 /*<! GSM_REG_NETWORK_STATE --------------------------------------------*/
+static bool process_gsm_reg_network_state_entry(void){
+    at_command_t cmd = {
+        .cmd = "AT+CREG?",
+        .expect = "+CREG:",
+        .timeout_ms = 10000,
+        .start_tick = get_systick_ms(),
+        .cb = gsm_reg_network_callback
+    };
+    return send_at_cmd(cmd);
+}
+static void process_gsm_reg_network_state_wait(void){
+
+}
+
+
 static void process_gsm_reg_network_state(void)
 {
     // TODO: Your logic here
@@ -301,48 +543,48 @@ static void process_gsm_ready_state(void)
 void gsm_process(void){
     switch (gsm_cur_state)
     {
-    case GSM_DECISION_STATE:
-        process_gsm_decision_state();
-        break;
+        case GSM_DECISION_STATE:
+            process_gsm_decision_state();
+            break;
 
-    case GSM_POWER_OFF_STATE:
-        process_gsm_power_off_state();
-        break;
+        // case GSM_POWER_OFF_STATE:
+        //     process_gsm_power_off_state();
+        //     break;
 
-    case GSM_POWER_ON_STATE:
-        process_gsm_power_on_state();
-        break;
+        case GSM_POWER_ON_STATE:
+            process_gsm_power_on_state();
+            break;
 
-    case GSM_SYNC_AT_STATE:
-        process_gsm_sync_at_state();
-        break;
+        case GSM_SYNC_AT_STATE:
+            process_gsm_sync_at_state();
+            break;
 
-    case GSM_CONFIG_STATE:
-        process_gsm_config_state();
-        break;
+        case GSM_CONFIG_STATE:
+            process_gsm_config_state();
+            break;
 
-    case GSM_CHECK_SIM_STATE:
-        process_gsm_check_sim_state();
-        break;
+        case GSM_CHECK_SIM_STATE:
+            process_gsm_check_sim_state();
+            break;
 
-    case GSM_REG_NETWORK_STATE:
-        process_gsm_reg_network_state();
-        break;
+        case GSM_REG_NETWORK_STATE:
+            process_gsm_reg_network_state();
+            break;
 
-    case GSM_ATTACH_PSD:
-        process_gsm_attach_psd_state();
-        break;
+        case GSM_ATTACH_PSD:
+            process_gsm_attach_psd_state();
+            break;
 
-    case GSM_ACTIVATE_PDP:
-        process_gsm_activate_pdp_state();
-        break;
+        case GSM_ACTIVATE_PDP:
+            process_gsm_activate_pdp_state();
+            break;
 
-    case GSM_ERROR:
-        process_gsm_error_state();
-        break;
+        case GSM_ERROR:
+            process_gsm_error_state();
+            break;
 
-    case GSM_READY:
-        process_gsm_ready_state();
-        break;
+        case GSM_READY:
+            process_gsm_ready_state();
+            break;
     }
 }

@@ -129,6 +129,9 @@ void modem_init_pwkey_gpio_hw(void){
  * @brief   Recall these init func above
  */
 void hardware_init(void){
+    clock_init_64MHz_HSI();
+    systick_init(1000);
+    
     modem_init_pc_stm_usart_hw();
     modem_init_sim_usart_hw();
     modem_init_led_hw();

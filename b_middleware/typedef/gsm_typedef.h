@@ -6,6 +6,10 @@
 /* ============================================================================================ */
 
 /* ====================================== DEFINTIONS ========================================== */
+/* ============================================================================================ */
+
+
+/* ====================================== TYPEDEF DEFINITION ================================== */
 typedef enum {
     GSM_DECISION_STATE = 0,
 
@@ -29,7 +33,6 @@ typedef enum {
 } gsm_state_t;
 
 typedef struct {
-    bool decision;
     bool power_off;
     bool power_on;
     bool sync_at;
@@ -41,10 +44,17 @@ typedef struct {
     bool error;
     bool ready;
 } gsm_decision_flag_t;
-/* ============================================================================================ */
 
-
-/* ====================================== TYPEDEF DEFINITION ================================== */
+typedef enum {
+    NET_NOT_REGISTERED = 0,   // stat = 0
+    NET_REGISTERED_HOME,      // stat = 1
+    NET_SEARCHING,            // stat = 2
+    NET_REG_DENIED,           // stat = 3
+    NET_UNKNOWN,              // stat = 4
+    NET_REGISTERED_ROAMING,   // stat = 5
+    NET_REGISTERED_SMS,       // stat = 6
+    NET_REGISTERED_SMS_ROAM   // stat = 7
+} network_state_t;
 /* ============================================================================================ */
 
 #endif /* __GSM_TYPEDEF_H__ */

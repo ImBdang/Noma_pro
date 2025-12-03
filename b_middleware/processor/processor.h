@@ -5,6 +5,7 @@
 #include "hardware.h"
 #include "at_engine.h"
 #include "urc_handler.h"
+#include "gsm.h"
 /* ============================================================================================= */
 
 

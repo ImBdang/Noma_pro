@@ -55,7 +55,7 @@ INCDIR += ./b_middleware/event_driver
 INCDIR += ./b_middleware/gpio_driver
 INCDIR += ./b_middleware/gsm_driver
 INCDIR += ./b_middleware/processor
-INCDIR += ./b_middleware/string_handlnc
+INCDIR += ./b_middleware/string_handler
 INCDIR += ./b_middleware/typedef
 INCDIR += ./b_middleware/usart_driver
 

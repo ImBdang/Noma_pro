@@ -10,5 +10,6 @@ void processor_init(void){
 }
 
 void processor(void){
-    
+    at_engine_process();        /*<! Parse and get line command */
+    gsm_process();              /*<! Finite State Machine GSM */
 }

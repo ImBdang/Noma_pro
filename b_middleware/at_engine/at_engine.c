@@ -1,5 +1,10 @@
 #include "at_engine.h"
 
+/* ====================================== GLOBAL VARIABLES ================================== */
+lwrb_t  usart_rb;                               /*<! LWRB */
+uint8_t line_buff[LINE_BUFFER_SIZE];            /*<! Buffer get data from LWRB to process */
+/* ========================================================================================== */
+
 /* ================================== STATIC DECLARATIONS =================================== */
 static uint8_t lwrb_buffer[LWRB_BUFFER_SIZE];   /*<! Buffer for lwrb that store usart rx */
 static bool is_busy = false;                    /*<! Flag to know any AT command is sending, mostly to classify */
@@ -8,7 +13,9 @@ static at_command_t executing_cmd;              /*<! Executing AT command */
 static void handle_response_line(const char *line);
 static void handle_urc_line(const char *urc);
 static void line_parse(void);
-/* =========================================================================================== */
+/* ========================================================================================== */
+
+
 
 /**
  * @brief   Send AT command
@@ -21,7 +28,7 @@ static void line_parse(void);
  * @retval  true if send success
  * @retval  false is send not success (mostly is_busy is true, other command is still wating for response)
  */
-bool modem_send_at_cmd(at_command_t cmd){
+bool send_at_cmd(at_command_t cmd){
     if (is_busy)
         return false;
     executing_cmd = cmd;

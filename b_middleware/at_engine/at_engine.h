@@ -17,12 +17,12 @@
 
 /* ====================================== DEFINITIONS ========================================== */
 extern  lwrb_t  usart_rb;
-extern  char    line_buff[LINE_BUFFER_SIZE];
+extern  uint8_t line_buff[LINE_BUFFER_SIZE];
 /* ============================================================================================= */
 
 
 /* ====================================== API ================================================== */
-bool send_at_command(at_command_t cmd);
+bool send_at_cmd(at_command_t cmd);
 void at_engine_process(void);
 void at_engine_init(void);
 /* ============================================================================================= */
