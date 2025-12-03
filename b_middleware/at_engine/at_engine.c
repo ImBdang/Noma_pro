@@ -1,9 +1,9 @@
 #include "at_engine.h"
 
 /* ================================== STATIC DECLARATIONS =================================== */
-static lwrb_buffer[LWRB_BUFFER_SIZE];   /*<! Buffer for lwrb that store usart rx */
-static bool is_busy = false;            /*<! Flag to know any AT command is sending */
-static at_command_t executing_cmd;      /*<! Executing AT command */
+static uint8_t lwrb_buffer[LWRB_BUFFER_SIZE];   /*<! Buffer for lwrb that store usart rx */
+static bool is_busy = false;                    /*<! Flag to know any AT command is sending, mostly to classify */
+static at_command_t executing_cmd;              /*<! Executing AT command */
 
 static void handle_response_line(const char *line);
 static void handle_urc_line(const char *urc);
@@ -36,7 +36,167 @@ bool modem_send_at_cmd(at_command_t cmd){
     return true;
 }
 
+/**
+ * @brief   Parse the line that GSM modem resposne
+ */
+void line_parse(void){
+    static uint16_t line_len = 0;       /*<! Len of the line resposne */
+    uint8_t c;
+    while (lwrb_read(&usart_rb, &c, 1)){
+
+        // if (httpread_incoming) {
+        //     *httpread_ptr++ = c;
+        //     httpread_remaining--;
+        //     if (httpread_remaining == 0) {
+        //         httpread_incoming = false;
+        //         flash_chunk(temp_buf, chunk_actual, SECTOR_5_ADDR + current_offset);
+        //     }
+        //     continue; 
+        // }
+
+        if (line_len < sizeof(line_buff) - 1) {
+
+            if (c != 0xFF){
+                line_buff[line_len++] = c;
+            }
+        }
+
+        if (c == '\n') {
+            line_buff[line_len] = '\0';     
+            if (is_busy){
+                DEBUG_PRINT("<< RESPONSE: ");
+                DEBUG_PRINT(line_buff);
+                DEBUG_PRINT("\r");
+                handle_response_line(line_buff);
+            }
+            else {
+                DEBUG_PRINT("<< URC: ");
+                DEBUG_PRINT(line_buff);
+                DEBUG_PRINT("\r");
+                handle_urc_line(line_buff);
+            }
+            line_len = 0;              
+        }
+
+    }
+}
+
+/**
+ * @brief   Handle a single response line from the modem.
+ *
+ * This function processes one line returned by the modem and classifies it into
+ * one of the following response categories:
+ *
+ *  - PRIMARY:       The line matches the expected pattern of the executing command.
+ *  - OK_RESP:       The terminal "OK" response.
+ *  - ERROR_RESP:    The terminal "ERROR" response.
+ *  - INTERMEDIATE:  Any line that is not primary or final.
+ *
+ * The processing sequence:
+ *  1) Ignore empty lines, or lines starting with '\r' / '\n'
+ *  2) Check for PRIMARY match using `executing_cmd.expect`
+ *  3) Detect terminal "OK"
+ *  4) Detect terminal "ERROR"
+ *  5) Otherwise, treat it as an INTERMEDIATE line
+ *
+ * @param[in] line   Null-terminated response string from the modem.
+ *
+ * @note This function does NOT buffer or queue lines. It immediately forwards
+ *       the parsed classification to the user callback defined in `executing_cmd.cb`.
+ *
+ * @note Setting `is_busy = false` occurs when a final result ("OK" or "ERROR") is detected.
+ */
+void handle_response_line(const char *line){
+    /*<! If the line is empty */
+    size_t len = strlen(line);
+    if (len == 0 || line[0] == '\r' || line[0] == '\n')
+        return;
+        
+    /*<! PRIMARY response */
+    if (executing_cmd.expect[0] != '\0' &&
+        strncmp(line, executing_cmd.expect, strlen(executing_cmd.expect)) == 0)
+    {
+        if (executing_cmd.cb)
+            executing_cmd.cb(PRIMARY_RESP, line, strlen(line));
+        return;
+    }
+
+    /*<! OK response */
+    if (strstr(line, "OK") != NULL)
+    {
+        is_busy = false;
+        if (executing_cmd.cb)
+            executing_cmd.cb(OK_RESP ,line, 2);
+        return;
+    }
+
+    /*<! ERROR response*/    
+    if (strstr(line, "ERROR") != NULL)
+    {
+        is_busy = false;
+        if (executing_cmd.cb)
+            executing_cmd.cb(ERROR_RESP, line, 5);
+
+        return;
+    }
+
+    /*<! INTERMEDIATE response */
+    if (executing_cmd.cb) {
+        executing_cmd.cb(INTERMEDIATE, line, strlen(line));
+    }
+}
+
+/**
+ * @brief   Handle urc line
+ */
+void handle_urc_line(const char *urc){
+    /*<! NEW SMS URC */
+    if (strncmp(urc, "+CMTI:", 6) == 0) {
+        event_t evt = {
+            .urc = URC_SMS_NEW
+        };
+        return;
+    }
+
+    if (strncmp(urc, "+CREG:", 6) == 0) {
+        return;
+    }
+
+    if (strncmp(urc, "+HTTPACTION:", 12) == 0) {
+        return;
+    }
+
+    if (strncmp(urc, "+HTTPREAD:", 10) == 0) {
+        return;
+    }
+
+
+    if (strcmp(urc, "RING") == 0) {
+        return;
+    }
+}
+
+/**
+ * @brief   Daily task, check and parse line
+ *          Check AT command
+ */
+void at_engine_process(void){
+    line_parse();
+    if (is_busy) {
+        uint32_t now = get_systick_ms();
+        if (now - executing_cmd.start_tick >= executing_cmd.timeout_ms) {
+            is_busy = false;
+            if (executing_cmd.cb){
+                executing_cmd.cb(TIMEOUT_RESP ,"TIMEOUT", 7);
+                is_busy = false;
+            }
+        }
+    }
+}
+
+/**
+ * @brief   Init engine
+ */
 void at_engine_init(void){
-    hardware_init();
     lwrb_init(&usart_rb, lwrb_buffer, sizeof(lwrb_buffer));
 }

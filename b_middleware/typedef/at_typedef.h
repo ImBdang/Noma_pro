@@ -1,7 +1,7 @@
 #ifndef __AT_TYPEDEF_H__
 #define __AT_TYPEDEF_H__
 
-/* ====================================== INCLDE HEADER ======================================= */
+/* ====================================== INCLUDE HEADER ====================================== */
 #include "stdint.h"
 #include "callback_typedef.h"
 /* ============================================================================================ */
@@ -13,14 +13,6 @@
 
 
 /* ====================================== TYPEDEF DEFINITION ================================== */
-typedef enum {
-    OK_RESP,
-    ERROR_RESP,
-    TIMEOUT_RESP,
-    PRIMARY,
-    INTERMEDIATE
-} response_status_t;
-
 typedef struct {
     char cmd[128];                                                  /*<! AT command */
     char expect[32];                                                /*<! AT expect response */

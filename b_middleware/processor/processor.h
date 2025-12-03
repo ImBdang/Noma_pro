@@ -1,30 +1,21 @@
-#ifndef __AT_ENGINE_H__
-#define __AT_ENGINE_H__
+#ifndef __PROCESSOR_H__
+#define __PROCESSOR_H__
 
 /* ====================================== INCLUDE HEADER ======================================= */
-#include "stdint.h"
-#include "stdbool.h"
-#include "string.h"
-#include "event.h"
-#include "debug_driver.h"
-#include "systick_api.h"
 #include "hardware.h"
-#include "lwrb.h"
-#include "at_typedef.h"
+#include "at_engine.h"
+#include "urc_handler.h"
 /* ============================================================================================= */
 
 
 
 /* ====================================== DEFINITIONS ========================================== */
-extern  lwrb_t  usart_rb;
-extern  char    line_buff[LINE_BUFFER_SIZE];
 /* ============================================================================================= */
 
 
 /* ====================================== API ================================================== */
-bool send_at_command(at_command_t cmd);
-void at_engine_process(void);
-void at_engine_init(void);
+void processor_init(void);
+void processor(void);
 /* ============================================================================================= */
 
-#endif /* __AT_ENGINE_H__ */
+#endif /* __PROCESSOR_H__ */

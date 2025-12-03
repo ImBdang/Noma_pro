@@ -48,9 +48,17 @@ INCDIR += ./a_application/gpio_task
 INCDIR += ./a_application/usart_task
 
 #	MIDDLEWARE
-INCDIR += ./b_middleware/at_engine/inc
-INCDIR += ./b_middleware/gpio_driver/inc
-INCDIR += ./b_middleware/usart_driver/inc
+INCDIR += ./b_middleware/at_engine
+INCDIR += ./b_middleware/callback
+INCDIR += ./b_middleware/debug_driver
+INCDIR += ./b_middleware/event_driver
+INCDIR += ./b_middleware/gpio_driver
+INCDIR += ./b_middleware/gsm_driver
+INCDIR += ./b_middleware/processor
+INCDIR += ./b_middleware/string_handlnc
+INCDIR += ./b_middleware/typedef
+INCDIR += ./b_middleware/usart_driver
+
 
 #	HARDWARE
 INCDIR += ./c_hardware/CMSIS/inc

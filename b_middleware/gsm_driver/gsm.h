@@ -1,8 +1,11 @@
-#ifndef __CALLBACK_TYPEDEF_H__
-#define __CALLBACK_TYPEDEF_H__
+#ifndef __GSM_H__
+#define __GSM_H__
 
-/* ====================================== INCLDE HEADER ======================================= */
+/* ====================================== INCLUDE HEADER ====================================== */
 #include "stdint.h"
+#include "stdbool.h"
+#include "at_engine.h"
+#include "gsm_typedef.h"
 /* ============================================================================================ */
 
 /* ====================================== DEFINTIONS ========================================== */
@@ -10,15 +13,10 @@
 
 
 /* ====================================== TYPEDEF DEFINITION ================================== */
-typedef enum {
-    OK_RESP,
-    ERROR_RESP,
-    TIMEOUT_RESP,
-    PRIMARY_RESP,
-    INTERMEDIATE
-} response_status_t;
-
-typedef void (*gsm_callback)(response_status_t status, const char* line, uint32_t len);
+void gsm_process(void);
+bool gsm_power_on(void);
+bool gsm_power_off(void);
+bool gsm_power_reset(void);
 /* ============================================================================================ */
 
-#endif /* __CALLBACK_TYPEDEF_H__ */
+#endif /* __GSM_H__ */
