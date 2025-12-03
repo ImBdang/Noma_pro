@@ -123,13 +123,11 @@ void gsm_check_sim_callback(response_status_t status, const char* line, uint32_t
 }
 
 void gsm_reg_network_callback(response_status_t status, const char* line, uint32_t len){
-    network_state = NET_NOT_REGISTERED;
     char value[16];
     switch (status)
     {
         case PRIMARY_RESP:
             primary_dispatch(line, value);
-
             if (strstr(value, "0,0"))
                 network_state = NET_NOT_REGISTERED;
 

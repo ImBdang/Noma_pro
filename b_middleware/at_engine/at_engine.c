@@ -37,7 +37,7 @@ bool send_at_cmd(at_command_t cmd){
 
     usart_sendstring(SIM_USART_PORT, executing_cmd.cmd);
     usart_sendstring(SIM_USART_PORT, "\r\n");
-    DEBUG_PRINT(">>");
+    DEBUG_PRINT(">> AT CMD: ");
     DEBUG_PRINT(executing_cmd.cmd);
     DEBUG_PRINT("\r\n");
     return true;

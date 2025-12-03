@@ -1,22 +1,29 @@
-#ifndef __STRING_HANDLER_H__
-#define __STRING_HANDLER_H__
+#ifndef __HTTP_ENGINE_H__
+#define __HTTP_ENGINE_H__
 
 /* ====================================== INCLUDE HEADER ======================================= */
-#include "string.h"
 #include "stdint.h"
+#include "stdbool.h"
+#include "stdio.h"
+#include "string.h"
+#include "debug_driver.h"
+#include "at_engine.h"
+#include "http_typedef.h"
+#include "gsm_callback.h"
 /* ============================================================================================= */
 
 
 
-/* ====================================== DEFINITIONS ========================================== */
+/* ====================================== VARIABLES ============================================ */
+extern uint8_t http_read_buff[HTTP_READ_BUFFER];
 /* ============================================================================================= */
 
 
 /* ====================================== API ================================================== */
-void primary_dispatch(const char* str, char* result);
-void new_sms_dispatch(const char* str, char* id_out);
-uint32_t fast_atoi(const char *s);
-void fast_itoa(uint32_t value, char *buf);
+bool http_init(void);
+bool http_term(void);
+bool http_seturl(const char* url);
+bool http_action(uint8_t action);
 /* ============================================================================================= */
 
-#endif /* __STRING_HANDLER_H__ */
+#endif /* __HTTP_ENGINE_H__ */
