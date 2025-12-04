@@ -3,6 +3,8 @@
 /* ====================================== GLOBAL VARIABLES ================================== */
 lwrb_t  usart_rb;                               /*<! LWRB */
 uint8_t line_buff[LINE_BUFFER_SIZE];            /*<! Buffer get data from LWRB to process */
+bool http_read_flag = false;
+uint8_t* http_read_ptr = NULL;
 /* ========================================================================================== */
 
 /* ================================== STATIC DECLARATIONS =================================== */
@@ -51,15 +53,17 @@ void line_parse(void){
     uint8_t c;
     while (lwrb_read(&usart_rb, &c, 1)){
 
-        // if (httpread_incoming) {
-        //     *httpread_ptr++ = c;
-        //     httpread_remaining--;
-        //     if (httpread_remaining == 0) {
-        //         httpread_incoming = false;
-        //         flash_chunk(temp_buf, chunk_actual, SECTOR_5_ADDR + current_offset);
-        //     }
-        //     continue; 
-        // }
+        /*<! ACTIVE TO COLLECT HTTPDATA, ENABLE WHEN HTTPREAD */
+        if (http_read_flag) {
+            *http_read_ptr++ = c;
+            reading_chunk--;
+            if (reading_chunk == 0) {
+                http_read_flag = false;
+                http_read_ptr = http_read_buff;        /*<! RESET TO HEAD OF THE BUFFER */
+                //flash_chunk(http_read_buff, chunk_actual, 0x08020000 + 0);
+            }
+            continue; 
+        }
 
         if (line_len < sizeof(line_buff) - 1) {
 
@@ -182,6 +186,10 @@ void handle_urc_line(const char *urc){
     }
 
     if (strncmp(urc, "+HTTPREAD:", 10) == 0) {
+        event_t event = {
+            .urc = URC_HTTPREAD
+        };
+        push_event(&urc_event_queue, event);
         urc_process(urc);
         return;
     }

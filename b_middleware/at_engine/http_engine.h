@@ -17,6 +17,7 @@
 /* ====================================== VARIABLES ============================================ */
 extern uint8_t http_read_buff[HTTP_READ_BUFFER];
 extern uint32_t http_data_len;
+extern uint32_t reading_chunk;
 /* ============================================================================================= */
 
 
@@ -25,7 +26,7 @@ bool http_init(void);
 bool http_term(void);
 bool http_seturl(const char* url);
 bool http_action(uint8_t action);
-bool http_read(uint32_t chunk);
+bool http_read(uint32_t offset, uint32_t chunk);
 /* ============================================================================================= */
 
 #endif /* __HTTP_ENGINE_H__ */

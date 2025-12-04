@@ -36,11 +36,18 @@ void processor(void){
                     break;
                 
                 case 3:
+                    if (http_read(0, 1024)){
+                        step++;
+                        DEBUG_PRINT("PROCESS DONE\r\n");
+                    }
+                    break;
+                
+                case 4:
                     flag = false;
                     break;
 
             }
-            delay_ms(500);
+            delay_ms(200);
         }
     }
 }

@@ -1,11 +1,13 @@
 #include "http_engine.h"
 
 /* ====================================== GLOBAL VARIABLES ================================== */
+uint32_t reading_chunk;
 uint8_t http_read_buff[HTTP_READ_BUFFER];               /*<! HTTP READ BFFER TO STORE */
 uint32_t http_data_len;                                 /*<! LEN OF THE DATA THAT NEED TO READ */
 /* ========================================================================================== */
 
 /* ================================== STATIC DECLARATIONS =================================== */
+static bool is_busy = false;
 /* ========================================================================================== */
 
 static bool http_init_entry(void){
@@ -265,9 +267,13 @@ bool http_action(uint8_t action){
 }
 
 
-static bool http_read_entry(uint32_t chunk){     
-    char buf[32];           
-    sprintf(buf, "AT+HTTPREAD=0,%s", chunk);
+static bool http_read_entry(uint32_t offset, uint32_t chunk){     
+    char buf[32];
+    char chunk_str[11];
+    char offset_str[11];
+    fast_itoa(chunk, chunk_str);
+    fast_itoa(offset, offset_str);
+    sprintf(buf, "AT+HTTPREAD=%s,%s", offset_str, chunk_str);
     at_command_t cmd = {
         .timeout_ms = 12000,
         .expect = "",
@@ -287,7 +293,7 @@ static bool http_read_wait(void){
     switch (event.response)
     {
         case EVT_OK:
-            DEBUG_PRINT("HTTPREAD SUCCESS\r\n");
+            DEBUG_PRINT("HTTPREAD OK\r\n");
             timeout_count = 0; 
             return true;
 
@@ -308,16 +314,18 @@ static bool http_read_wait(void){
     }   
 }
 
-bool http_read(uint32_t chunk){
+bool http_read(uint32_t offset, uint32_t chunk){
+    if (is_busy)
+        return false;
     if (http_data_len == 0)
         return true;
-
+    reading_chunk = chunk;
     static uint8_t step = 0;
     bool tmp = false;
     switch (step)
     {
     case 0:
-        tmp = http_read_entry(chunk);
+        tmp = http_read_entry(offset, chunk);
         if (tmp){
             step++;
         }
@@ -326,8 +334,10 @@ bool http_read(uint32_t chunk){
     case 1:
         if (http_read_wait()){
             step = 0;
+            is_busy = false;
             return true;
         }
+        is_busy = false;
         step = 0;
         return false;
     }

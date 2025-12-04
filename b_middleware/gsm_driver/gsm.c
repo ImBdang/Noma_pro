@@ -172,6 +172,7 @@ bool gsm_power_reset(void){
             step = 0;
             return true;
         }
+        step = 0;
         return false;
     }
     return false;
@@ -488,8 +489,8 @@ static void process_gsm_check_sim_state(void)
         break;
     
     case 1:
-        if (process_gsm_check_sim_state_wait())
-            step = 0;
+        process_gsm_check_sim_state_wait();
+        step = 0;
         break;
 
     }

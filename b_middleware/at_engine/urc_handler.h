@@ -3,6 +3,7 @@
 
 /* ====================================== INCLUDE HEADER ======================================= */
 #include "at_typedef.h"
+#include "at_engine.h"
 #include "callback_typedef.h"
 #include "stdbool.h"
 #include "stdint.h"

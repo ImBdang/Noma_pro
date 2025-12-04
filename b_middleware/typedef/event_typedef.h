@@ -42,6 +42,7 @@ typedef enum {
     URC_SMS_RECEIVED,
     
     URC_HTTPACTION,
+    URC_HTTPREAD,
 
     URC_RING
 } urc_event_t;
