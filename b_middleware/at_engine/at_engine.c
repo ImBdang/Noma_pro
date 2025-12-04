@@ -60,7 +60,6 @@ void line_parse(void){
             if (reading_chunk == 0) {
                 http_read_flag = false;
                 http_read_ptr = http_read_buff;        /*<! RESET TO HEAD OF THE BUFFER */
-                //flash_chunk(http_read_buff, chunk_actual, 0x08020000 + 0);
             }
             continue; 
         }

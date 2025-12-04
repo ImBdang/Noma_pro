@@ -10,6 +10,9 @@
 
 /* ====================================== DEFINTIONS ========================================== */
 #define CHUNK_SIZE              512
+#define OTA_SECTOR_ADDR         0x08020000
+#define OTA_FLAG_ADDR           0x0801FFF8
+#define OTA_SIZE_ADDR           0x0801FFFC
 
 extern bool ota_detect;
 /* ============================================================================================ */

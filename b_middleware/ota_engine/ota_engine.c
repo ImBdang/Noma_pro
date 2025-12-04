@@ -6,8 +6,8 @@ bool ota_detect = false;
 
 
 /* ================================== STATIC DECLARATIONS =================================== */
-//static char firmware_url[128] = "https://raw.githubusercontent.com/ImBdang/raw/main/main.bin";
-static char firmware_url[128] = "http://opinion.people.com.cn/GB/n1/2018/0815/c1003-30228758.html";
+static char firmware_url[128] = "https://raw.githubusercontent.com/ImBdang/raw/main/main.bin";
+//static char firmware_url[128] = "http://opinion.people.com.cn/GB/n1/2018/0815/c1003-30228758.html";
 static uint32_t offset = 0;
 
 static bool ota_download_firmware(void);
@@ -34,6 +34,7 @@ static bool ota_download_firmware(void){
     case 1:
         if (http_action(0)){
             step++;
+            flash_erase_sector_addr(OTA_SECTOR_ADDR);
         }
         break;
     
@@ -41,9 +42,13 @@ static bool ota_download_firmware(void){
         if (http_data_len > 0){
             uint32_t actual_chunk = (http_data_len > CHUNK_SIZE) ? CHUNK_SIZE : http_data_len;
             if (http_read(offset, actual_chunk)){
+                flash_chunk(http_read_buff, actual_chunk, OTA_SECTOR_ADDR + offset);
                 http_data_len -= actual_chunk;
-                step = 0;
-                return true;
+                offset += actual_chunk;
+                if (http_data_len == 0){
+                    step = 0;
+                    return true;
+                }
             }
         }
         return false;;
@@ -69,7 +74,6 @@ void ota_process(void){
         break;
     
     case 1:
-        breakp();
         break;
     }
 }

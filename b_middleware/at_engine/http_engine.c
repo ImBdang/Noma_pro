@@ -341,8 +341,6 @@ bool http_read(uint32_t offset, uint32_t chunk){
             is_busy = false;
             return true;
         }
-        is_busy = false;
-        step = 0;
         return false;
     }
     return false;

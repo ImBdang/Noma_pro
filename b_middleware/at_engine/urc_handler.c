@@ -40,7 +40,6 @@ void urc_process(const char* urc){
     case URC_HTTPREAD:
         http_read_flag = true;
         http_read_ptr = http_read_buff;
-        http_data_len -= reading_chunk;
         break;
     }
 }
