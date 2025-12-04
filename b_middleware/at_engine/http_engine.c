@@ -1,13 +1,15 @@
 #include "http_engine.h"
 
 /* ====================================== GLOBAL VARIABLES ================================== */
-uint32_t reading_chunk;
+uint32_t reading_chunk;                                 /*<! THIS VAR UPDATE IN HTTPREAD FUNC */
 uint8_t http_read_buff[HTTP_READ_BUFFER];               /*<! HTTP READ BFFER TO STORE */
 uint32_t http_data_len;                                 /*<! LEN OF THE DATA THAT NEED TO READ */
+
 /* ========================================================================================== */
 
 /* ================================== STATIC DECLARATIONS =================================== */
-static bool is_busy = false;
+static bool is_busy = false;                            /*<! Only for when read mode */
+static bool http_ready = false;                         
 /* ========================================================================================== */
 
 static bool http_init_entry(void){
@@ -66,6 +68,7 @@ bool http_init(void){
     case 1:
         if (http_init_wait()){
             step = 0;
+            http_ready = true;
             return true;
         }
         step = 0;
@@ -131,6 +134,7 @@ bool http_term(void){
     case 1:
         if (http_term_wait()){
             step = 0;
+            http_ready = false;
             return true;
         }
         step = 0;
@@ -344,3 +348,6 @@ bool http_read(uint32_t offset, uint32_t chunk){
     return false;
 }
 
+bool http_is_ready(void){
+    return http_ready;
+}

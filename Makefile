@@ -58,6 +58,8 @@ INCDIR += ./b_middleware/processor
 INCDIR += ./b_middleware/string_handler
 INCDIR += ./b_middleware/typedef
 INCDIR += ./b_middleware/usart_driver
+INCDIR += ./b_middleware/flash_driver
+INCDIR += ./b_middleware/ota_engine
 
 
 #	HARDWARE

@@ -7,6 +7,7 @@
 #include "http_typedef.h"
 #include "urc_handler.h"
 #include "http_engine.h"
+#include "ota_engine.h"
 #include "gsm.h"
 /* ============================================================================================= */
 

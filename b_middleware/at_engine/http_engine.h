@@ -27,6 +27,7 @@ bool http_term(void);
 bool http_seturl(const char* url);
 bool http_action(uint8_t action);
 bool http_read(uint32_t offset, uint32_t chunk);
+bool http_is_ready(void);
 /* ============================================================================================= */
 
 #endif /* __HTTP_ENGINE_H__ */

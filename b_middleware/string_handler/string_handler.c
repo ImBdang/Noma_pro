@@ -41,6 +41,21 @@ void fast_itoa(uint32_t value, char *buf) {
     buf[j] = '\0';
 }
 
+/**
+ * @brief   Dispatch foramt +HTTPREAD: 500
+ * 
+ * @retval  Size after dispatch
+ */
+uint32_t httpread_dispatch(const char* str){
+    const char* p = strstr(str, "+HTTPREAD:");
+    if (!p) return 0;
+
+    p += strlen("+HTTPREAD:");
+
+    while (*p == ' ' || *p == '\t') p++;
+
+    return fast_atoi(p);
+}
 
 /**
  * @brief   Dispatch PRIMARY response as like +CPIN: READY

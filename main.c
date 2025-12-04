@@ -6,7 +6,6 @@ int main(void){
     while (1){
         processor();
         delay_ms(500);
-        //breakp();
     }
     return 0;
 }
