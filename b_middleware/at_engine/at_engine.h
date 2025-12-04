@@ -9,6 +9,7 @@
 #include "debug_driver.h"
 #include "systick_api.h"
 #include "hardware.h"
+#include "urc_handler.h"
 #include "lwrb.h"
 #include "at_typedef.h"
 /* ============================================================================================= */
@@ -18,6 +19,7 @@
 /* ====================================== VARIABLES ============================================ */
 extern  lwrb_t  usart_rb;
 extern  uint8_t line_buff[LINE_BUFFER_SIZE];
+extern event_queue_t urc_event_queue;
 /* ============================================================================================= */
 
 

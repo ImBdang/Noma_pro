@@ -10,21 +10,37 @@ void processor_init(void){
 }
 
 void processor(void){
+    static uint8_t step = 0;
     static bool flag = true;
     at_engine_process();        /*<! Parse and get line command */
     gsm_process();              /*<! Finite State Machine GSM */
     if (gsm_is_ready()){
         if (flag){
-            http_term();
-            delay_ms(500);
-            if (!http_init()){
-                http_seturl(url);
-                return;
+            switch (step)
+            {
+                case 0:
+                    if (http_init())
+                        step++;
+                    else 
+                        http_term();
+                    break;
+                
+                case 1:
+                    if (http_seturl(url))
+                        step++;
+                    break;
+
+                case 2:
+                    if (http_action(0))
+                        step++;
+                    break;
+                
+                case 3:
+                    flag = false;
+                    break;
+
             }
-            delay_ms(300);
-            if (http_term())
-                flag = false;
-            breakp();
+            delay_ms(500);
         }
     }
 }

@@ -159,26 +159,36 @@ void handle_response_line(const char *line){
 void handle_urc_line(const char *urc){
     /*<! NEW SMS URC */
     if (strncmp(urc, "+CMTI:", 6) == 0) {
-        event_t evt = {
+        event_t event = {
             .urc = URC_SMS_NEW
         };
+        push_event(&urc_event_queue, event);
+        urc_process(urc);
         return;
     }
 
     if (strncmp(urc, "+CREG:", 6) == 0) {
+        urc_process(urc);
         return;
     }
 
     if (strncmp(urc, "+HTTPACTION:", 12) == 0) {
+        event_t event = {
+            .urc = URC_HTTPACTION
+        };
+        push_event(&urc_event_queue, event);
+        urc_process(urc);
         return;
     }
 
     if (strncmp(urc, "+HTTPREAD:", 10) == 0) {
+        urc_process(urc);
         return;
     }
 
 
     if (strcmp(urc, "RING") == 0) {
+        urc_process(urc);
         return;
     }
 }
