@@ -1,33 +1,26 @@
 #ifndef __GSM_TYPEDEF_H__
 #define __GSM_TYPEDEF_H__
 
-/* ====================================== INCLDE HEADER ======================================= */
+/* ====================================== INCLUDE HEADER ======================================= */
 #include "stdint.h"
 /* ============================================================================================ */
 
-/* ====================================== DEFINTIONS ========================================== */
+/* ====================================== DEFINITIONS ========================================== */
 /* ============================================================================================ */
 
-
 /* ====================================== TYPEDEF DEFINITION ================================== */
+/* ============================================================================================ */
+
 typedef enum {
-    GSM_DECISION_STATE = 0,
-
+    GSM_DECISION_STATE,
     GSM_POWER_OFF_STATE,
-    GSM_POWER_ON_STATE ,
-    
+    GSM_POWER_ON_STATE,
     GSM_SYNC_AT_STATE,
-
     GSM_CONFIG_STATE,
-
     GSM_CHECK_SIM_STATE,
-
     GSM_REG_NETWORK_STATE,
-
     GSM_ATTACH_PSD,
-
     GSM_ACTIVATE_PDP,
-
     GSM_ERROR,
     GSM_READY
 } gsm_state_t;
@@ -46,7 +39,7 @@ typedef struct {
 } gsm_decision_flag_t;
 
 typedef enum {
-    NET_NOT_REGISTERED = 0,   // stat = 0
+    NET_NOT_REGISTERED,       // stat = 0
     NET_REGISTERED_HOME,      // stat = 1
     NET_SEARCHING,            // stat = 2
     NET_REG_DENIED,           // stat = 3
@@ -55,6 +48,7 @@ typedef enum {
     NET_REGISTERED_SMS,       // stat = 6
     NET_REGISTERED_SMS_ROAM   // stat = 7
 } network_state_t;
+
 /* ============================================================================================ */
 
 #endif /* __GSM_TYPEDEF_H__ */

@@ -28,7 +28,7 @@ void fast_itoa(uint32_t value, char *buf) {
     if (value == 0) {
         buf[0] = '0';
         buf[1] = '\0';
-        return buf;
+        return;
     }
     while (value > 0) {
         temp[i++] = (value % 10) + '0';

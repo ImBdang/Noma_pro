@@ -4,6 +4,7 @@
 /* ====================================== INCLUDE HEADER ======================================= */
 #include "hardware.h"
 #include "at_engine.h"
+#include "http_typedef.h"
 #include "urc_handler.h"
 #include "http_engine.h"
 #include "gsm.h"

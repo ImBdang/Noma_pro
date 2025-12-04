@@ -2,7 +2,7 @@
 
 /* ====================================== GLOBAL VARIABLES ================================== */
 uint8_t http_read_buff[HTTP_READ_BUFFER];
-/* https://raw.githubusercontent.com/ImBdang/raw/main/main.bin */
+
 /* ========================================================================================== */
 
 /* ================================== STATIC DECLARATIONS =================================== */
@@ -145,15 +145,14 @@ static bool http_seturl_entry(const char* url){
     return send_at_cmd(cmd); 
 }
 static bool http_seturl_wait(){
-    modem_event_t evt;
+    event_t event;
     static uint8_t timeout_count = 0;
     static uint8_t max_timeout = 3;
-    if (!pop_event(&event_queue, &evt))
+    if (!pop_event(&response_event_queue, &event))
         return false;
-    switch (evt)
+    switch (event.response)
     {
         case EVT_OK:
-            step_set_url = 0;
             DEBUG_PRINT("SET OK\r\n");
             return true;
 
@@ -165,12 +164,13 @@ static bool http_seturl_wait(){
             return false;
         
 
-        case EVT_ERROR:
+        case EVT_ERR:
             timeout_count = 0;
             return false;
     }
     return false;
 }
+
 bool http_seturl(const char* url){
     static uint8_t step = 0;
     bool tmp = false;
@@ -193,6 +193,7 @@ bool http_seturl(const char* url){
     return false;
 }
 
-bool http_action(uint8_t action){
 
+bool http_action(uint8_t action){
+    
 }

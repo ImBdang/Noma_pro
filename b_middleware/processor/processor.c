@@ -17,8 +17,10 @@ void processor(void){
         if (flag){
             http_term();
             delay_ms(500);
-            if (!http_init())
+            if (!http_init()){
+                http_seturl(url);
                 return;
+            }
             delay_ms(300);
             if (http_term())
                 flag = false;
